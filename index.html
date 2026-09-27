@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slateline — Social Video Scripts, Instantly</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Archivo:wght@500;700;900&display=swap');
+
+  :root{
+    --ink:#1c1b19;
+    --paper:#f3efe4;
+    --paper-line:#d9d2bd;
+    --stage:#141311;
+    --rec:#d1382c;
+    --rec-dim:#7a231c;
+    --marker:#e8b93a;
+    --muted:#8b8577;
+    --ok:#4f7a5a;
+    font-family:'Archivo',sans-serif;
+    box-sizing:border-box;
+  }
+  *,*::before,*::after{box-sizing:inherit;}
+  html,body{height:100%;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0;
+    background:var(--stage);
+    color:var(--paper);
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Texture: film-leader edge ---------- */
+  .leader{
+    height:14px;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 10px, transparent 10px 20px);
+    opacity:.5;
+  }
+
+  header{
+    padding:56px 24px 40px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .slate-mark{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Courier Prime',monospace;
+    font-size:13px;
+    letter-spacing:.04em;
+    color:var(--marker);
+    border:1px solid var(--marker);
+    padding:4px 10px;
+    border-radius:3px;
+    margin-bottom:22px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--rec);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  h1{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:clamp(2.2rem,5.4vw,4.1rem);
+    line-height:1.02;
+    margin:0 0 20px;
+    max-width:16ch;
+    letter-spacing:-.01em;
+  }
+  header p.sub{
+    font-size:1.05rem;
+    line-height:1.55;
+    color:#c9c4b6;
+    max-width:52ch;
+    margin:0;
+  }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 24px 100px;
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:28px;
+  }
+  @media (max-width:820px){
+    main{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Control panel ---------- */
+  .panel{
+    background:#1a1917;
+    border:1px solid #2c2a26;
+    border-radius:4px;
+    padding:22px;
+    align-self:start;
+    position:sticky;
+    top:calc(24px + env(safe-area-inset-top,0px));
+  }
+  @media (max-width:820px){ .panel{position:static;} }
+
+  .panel h2{
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin:0 0 14px;
+    font-weight:700;
+  }
+  .field{margin-bottom:22px;}
+  .field:last-of-type{margin-bottom:26px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:8px;
+    font-family:'Courier Prime',monospace;
+  }
+  select{
+    width:100%;
+    background:var(--paper);
+    color:var(--ink);
+    border:none;
+    border-radius:2px;
+    padding:12px 12px;
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+    background-position:calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size:5px 5px,5px 5px;
+    background-repeat:no-repeat;
+    cursor:pointer;
+  }
+  select:focus-visible, button:focus-visible{
+    outline:2px solid var(--marker);
+    outline-offset:2px;
+  }
+
+  .duration-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .dur-btn{
+    background:transparent;
+    border:1px solid #3a382f;
+    color:var(--paper);
+    font-family:'Courier Prime',monospace;
+    font-size:13px;
+    padding:10px 6px;
+    border-radius:2px;
+    cursor:pointer;
+    text-align:center;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dur-btn span{display:block;color:var(--muted);font-size:11px;margin-top:2px;}
+  .dur-btn.active{
+    background:var(--marker);
+    border-color:var(--marker);
+    color:var(--ink);
+  }
+  .dur-btn.active span{color:#5c4a12;}
+
+  .generate-btn{
+    width:100%;
+    background:var(--rec);
+    color:#fff;
+    border:none;
+    padding:15px 12px;
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    border-radius:2px;
+    cursor:pointer;
+    letter-spacing:.01em;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .generate-btn:hover{background:#b52e23;}
+  .generate-btn:active{transform:scale(.98);}
+  .hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:12px;
+    line-height:1.5;
+    font-family:'Courier Prime',monospace;
+  }
+
+  /* ---------- Output: script page ---------- */
+  .page-wrap{min-height:400px;}
+  .empty-state{
+    border:1px dashed #3a382f;
+    border-radius:4px;
+    padding:60px 30px;
+    text-align:center;
+    color:var(--muted);
+    font-family:'Courier Prime',monospace;
+    font-size:14px;
+    line-height:1.7;
+  }
+  .empty-state strong{display:block;color:var(--paper);font-family:'Archivo',sans-serif;font-size:17px;margin-bottom:10px;font-weight:700;}
+
+  .script{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:3px;
+    padding:38px 36px 30px;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  @media (max-width:520px){ .script{padding:26px 18px 22px;} }
+
+  .script-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+    gap:16px;
+  }
+  .script-top .meta{
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    color:#5c5748;
+    line-height:1.6;
+  }
+  .script-top .meta b{color:var(--ink);}
+  #copyBtn{
+    background:transparent;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    padding:7px 12px;
+    border-radius:2px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  #copyBtn:hover{background:var(--ink);color:var(--paper);}
+
+  .idea-title{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:1.6rem;
+    line-height:1.15;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  .idea-angle{
+    font-size:14.5px;
+    color:#4a4636;
+    line-height:1.55;
+    margin:0 0 28px;
+    max-width:62ch;
+  }
+
+  .scene{
+    display:grid;
+    grid-template-columns:64px 1fr;
+    gap:16px;
+    padding:16px 0;
+    border-top:1px solid var(--paper-line);
+  }
+  .scene:last-child{padding-bottom:0;}
+  .scene .tc{
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    color:var(--rec-dim);
+    font-weight:700;
+    padding-top:2px;
+  }
+  .scene .slate-line{
+    font-family:'Courier Prime',monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#6b6656;
+    margin-bottom:5px;
+  }
+  .scene .shot{
+    font-size:13.5px;
+    color:#4a4636;
+    margin:0 0 8px;
+    line-height:1.5;
+  }
+  .scene .line{
+    font-family:'Courier Prime',monospace;
+    font-size:15px;
+    line-height:1.6;
+    margin:0;
+  }
+  .scene .overlay-tag{
+    display:inline-block;
+    margin-top:8px;
+    font-family:'Courier Prime',monospace;
+    font-size:11px;
+    background:#e9e2c9;
+    border:1px solid var(--paper-line);
+    padding:3px 8px;
+    border-radius:2px;
+    color:#5c5748;
+  }
+
+  .script-foot{
+    margin-top:28px;
+    padding-top:18px;
+    border-top:2px solid var(--ink);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .cta-box{
+    font-family:'Courier Prime',monospace;
+    font-size:13.5px;
+    color:#4a4636;
+  }
+  .cta-box b{color:var(--ink);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'Archivo',sans-serif;font-weight:700;}
+  .again-btn{
+    background:transparent;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-family:'Archivo',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    padding:10px 16px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .again-btn:hover{background:var(--ink);color:var(--paper);}
+
+  footer{
+    max-width:1100px;
+    margin:0 auto;
+    padding:40px 24px 70px;
+    color:var(--muted);
+    font-family:'Courier Prime',monospace;
+    font-size:12px;
+    line-height:1.7;
+  }
+  footer a{color:var(--marker);}
+
+  @media (prefers-reduced-motion: reduce){
+    .dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="leader"></div>
+
+<header>
+  <div class="slate-mark"><span class="dot"></span> SCRIPT GENERATOR — READY</div>
+  <h1>Your next video, blocked out before you finish your coffee.</h1>
+  <p class="sub">Pick a niche and a runtime. Slateline hands you an idea, a scene-by-scene shot list, and the lines to say — formatted like a real shooting script, not a wall of text.</p>
+</header>
+
+<div class="leader"></div>
+
+<main>
+  <div class="panel">
+    <h2>Set up the shoot</h2>
+
+    <div class="field">
+      <label for="niche">Niche</label>
+      <select id="niche"></select>
+    </div>
+
+    <div class="field">
+      <label>Runtime</label>
+      <div class="duration-grid" id="durationGrid"></div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">Generate script</button>
+    <p class="hint">Every generation is written fresh by AI for the niche and runtime you pick. If the AI backend isn't connected yet, this falls back to a built-in idea bank so the tool still works.</p>
+    <p class="hint" id="usageNote"></p>
+  </div>
+
+  <div class="page-wrap">
+    <div class="empty-state" id="emptyState">
+      <strong>No script yet.</strong>
+      Choose a niche and a runtime on the left, then hit "Generate script."<br>
+      You'll get a hook, a shot list with timecodes, and a call-to-action — ready to film.
+    </div>
+    <div class="script" id="scriptOut" style="display:none;"></div>
+  </div>
+</main>
+
+<footer>
+  Slateline is a free script-blocking tool for short-form creators. Ideas are generated from template patterns and shot conventions — always adapt the words to your own voice before filming.
+</footer>
+
+<script>
+(function(){
+
+  // ---------------- FALLBACK DATA ----------------
+  // Used only if the AI backend (/api/generate) is unavailable or errors out,
+  // so the tool still works before you've added an API key, or if the API call fails.
+  var FALLBACK_NICHES = {
+    fitness: {
+      label: "Fitness & Training",
+      ideas: [
+        { title:"The warm-up you're skipping (and paying for later)", hook:"You're not sore tomorrow because you lifted heavy. You're sore because you skipped this.", points:["Show the mobility drill most people cut when they're short on time.","Explain what it's actually protecting — the joint, not the muscle.","Give the 90-second version so there's no excuse left."], cta:"Save this for leg day." },
+        { title:"One set, done properly, beats three sets done lazy", hook:"I used to do three sets of everything. Then a coach watched one and told me to stop.", points:["Demonstrate the rep done too fast, then the same rep done controlled.","Point out the exact moment most people lose tension.","Challenge viewers to film themselves and compare."], cta:"Comment your worst exercise for form." },
+        { title:"The gym machine that's basically decoration", hook:"This machine is in every gym. Almost nobody uses it right.", points:["Name the machine and the mistake you see constantly.","Show the adjustment that changes everything.","Give one cue to remember mid-set."], cta:"Tag someone who lives on this machine." },
+        { title:"Why your progress stalled at week 6", hook:"Week six is where most people quit. Here's the boring reason why.", points:["Call out the plateau pattern by week and symptom.","Explain the one variable people forget to change.","Offer the smallest adjustment that restarts progress."], cta:"Follow for week-by-week fixes." },
+        { title:"A 20-minute session when you truly have no time", hook:"You don't need an hour. You need twenty minutes and a plan.", points:["Lay out the three-move structure, back to back.","Show how to scale it up or down by fitness level.","Time-stamp exactly what happens each minute."], cta:"Save this before you skip the gym today." },
+        { title:"The rest-day myth that's slowing you down", hook:"You think rest days are optional. Your results think otherwise.", points:["Explain what actually rebuilds during rest, not the gym.","Show the difference between 'rest' and 'lazy day.'","Give one active-recovery option that still counts."], cta:"Take your rest day seriously this week." },
+        { title:"Why 10,000 steps became the wrong goal for you", hook:"10,000 steps is a marketing number, not a science number.", points:["Explain where the number actually came from.","Show a better metric based on your own baseline.","Give a simple way to track it without overthinking."], cta:"Comment your daily average." }
+      ]
+    },
+    food: {
+      label: "Food & Cooking",
+      ideas: [
+        { title:"The pantry swap that fixes bland cooking", hook:"If your food tastes flat, it's not your recipe. It's this.", points:["Show the ingredient people forget to season with.","Demonstrate a before-and-after taste test on camera.","Give the ratio so it's repeatable."], cta:"Save this before your next grocery run." },
+        { title:"One pan, one dinner, under 15 minutes", hook:"Fifteen minutes, one pan, and you'll actually want to eat this.", points:["List the ingredients fast, quantities on screen.","Show the sequence: sear, deglaze, finish.","Plate it and cut to the first bite."], cta:"Comment 'recipe' and I'll drop the card." },
+        { title:"The restaurant trick that changes home cooking", hook:"Restaurants do this one thing that home cooks skip constantly.", points:["Name the technique and why it matters.","Show the quick version anyone can do at home.","Compare the result side-by-side."], cta:"Try it tonight and tag me." },
+        { title:"A grocery list that stops food waste", hook:"You're throwing away money every week and you don't notice it.", points:["Show the fridge audit — what's rotting and why.","Give the three-ingredient rule for planning meals.","Demonstrate a meal built entirely from 'leftovers'."], cta:"Save this for Sunday grocery day." },
+        { title:"The knife skill that saves you ten minutes a day", hook:"You're chopping wrong, and it's costing you time every single day.", points:["Show the grip mistake most people make.","Demonstrate the correct motion in slow motion.","Time a full onion both ways, side-by-side."], cta:"Practice this before your next meal prep." },
+        { title:"The seasoning mistake making meal prep boring", hook:"Meal prep tastes the same every day because you're seasoning it the same way every day.", points:["Show the single base you're overusing.","Give three fast flavor directions from the same base.","Taste-test all three side by side."], cta:"Pick one to try this week." },
+        { title:"A five-ingredient dinner nobody believes is five ingredients", hook:"Five ingredients. That's it. Watch.", points:["Lay out all five, nothing hidden.","Cook it start to finish in real time.","Plate it next to the ingredient list for proof."], cta:"Comment if you'd actually make this." }
+      ]
+    },
+    beauty: {
+      label: "Beauty & Skincare",
+      ideas: [
+        { title:"The skincare step that's actually undoing your routine", hook:"You're doing seven steps and undoing half of them with this one.", points:["Name the common mistake step by step.","Explain what it's actually doing to your skin barrier.","Show the corrected order on camera."], cta:"Save this and check your own routine." },
+        { title:"A five-minute face when you're already late", hook:"You have five minutes. Here's what actually makes a difference.", points:["Pick three products, no more, and show the order.","Time yourself applying each on camera.","Show the final look next to a full-routine look."], cta:"Which one would you actually use?" },
+        { title:"The ingredient combo that irritates skin", hook:"These two ingredients are in your bathroom right now and they don't mix.", points:["Name the two ingredients and the reaction they cause.","Show how to check your own products for this.","Give the safer way to use both, spaced out."], cta:"Comment your routine and I'll flag conflicts." },
+        { title:"What your skin is actually trying to tell you", hook:"That breakout isn't random. It's telling you something specific.", points:["Map three breakout zones to likely causes.","Show a real example without over-promising a cure.","Give the one change to try for two weeks."], cta:"Save this before you buy another product." },
+        { title:"A dupe that performs better than the original", hook:"I stopped buying the expensive one after trying this instead.", points:["Show both products side by side, ingredients on screen.","Apply both and compare texture and finish.","Give the price difference plainly."], cta:"Tag a friend overpaying for this." },
+        { title:"The order your skincare actually needs to go in", hook:"You own the right products. You're just applying them in the wrong order.", points:["List the correct order, thinnest to thickest.","Show the common two-step swap people get backwards.","Explain what happens when it's out of order."], cta:"Save this and re-check your shelf." },
+        { title:"A drugstore product outperforming luxury", hook:"This cost nine dollars and beat the hundred-dollar version in my routine.", points:["Show both products and their price tags.","Apply both, same skin, same lighting.","Compare the result after it sets."], cta:"Would you switch?" }
+      ]
+    },
+    tech: {
+      label: "Tech & Productivity",
+      ideas: [
+        { title:"The phone setting draining your battery silently", hook:"Your battery isn't dying. This setting is killing it.", points:["Show exactly where the setting lives.","Explain what it's doing in the background.","Turn it off on camera and show the difference."], cta:"Check yours right now." },
+        { title:"A keyboard shortcut that saves an hour a week", hook:"You've been doing this manually and there's a shortcut for it.", points:["Show the slow way people do it by default.","Demonstrate the shortcut in real time.","Stack it with one related shortcut."], cta:"Save this before you forget it." },
+        { title:"The app permission worth revoking today", hook:"This app can see more than you think. Here's how to check.", points:["Walk through the exact settings path.","Show what the permission actually allows.","Revoke it live and confirm the app still works."], cta:"Comment which app surprised you." },
+        { title:"A free tool that replaces a $20/month subscription", hook:"I cancelled a subscription after finding this free alternative.", points:["Show the paid tool's core feature.","Demonstrate the free tool doing the same job.","Note the one thing you do lose by switching."], cta:"Try it before you renew." },
+        { title:"The inbox rule that kills email overwhelm", hook:"My inbox went from 4,000 unread to zero. Here's the one rule.", points:["Show the filter or rule being created step by step.","Explain the logic behind where it sorts things.","Show the inbox before and after."], cta:"Set this up before you close the app." },
+        { title:"The browser tab habit slowing your whole laptop", hook:"You have forty tabs open and you wonder why everything is slow.", points:["Show the tab count and the fan noise it's causing.","Demonstrate the tool or shortcut that groups them.","Show the laptop speed up in real time."], cta:"Close five tabs right now." },
+        { title:"A two-minute setup that backs up your phone forever", hook:"If your phone died right now, would you lose anything? Fix that in two minutes.", points:["Show exactly where the setting lives.","Turn it on and confirm it's running.","Show what's actually being backed up."], cta:"Do this before you finish the video." }
+      ]
+    },
+    business: {
+      label: "Business & Finance",
+      ideas: [
+        { title:"The pricing mistake that's costing you clients", hook:"You're not losing clients because you're too expensive. It's this.", points:["Name the pricing structure mistake plainly.","Show a quick example with real numbers.","Give the fix in one sentence."], cta:"Comment your niche and I'll give feedback." },
+        { title:"A budgeting method that survives a bad month", hook:"Most budgets break the first time something unexpected happens. This one doesn't.", points:["Show the three-bucket structure on screen.","Walk through a real 'unexpected expense' scenario.","Show how the buckets absorb it without panic."], cta:"Save this before payday." },
+        { title:"The email that gets replies from clients who went quiet", hook:"A client ghosted you. Here's the exact message that gets a reply.", points:["Show the message structure, line by line.","Explain why guilt-based follow-ups backfire.","Give a second version for a colder lead."], cta:"Save this for your next follow-up." },
+        { title:"Why your first price should never be your only price", hook:"If you only offer one price, you're leaving money on the table.", points:["Show a simple three-tier structure.","Explain what changes between tiers, not just price.","Give an example from a real service."], cta:"Which tier would you buy?" },
+        { title:"The 10-minute habit that keeps finances from spiraling", hook:"This takes ten minutes a week and it's the only 'budgeting' I do.", points:["Show the exact weekly check-in, screen by screen.","Explain the one number that matters most.","Show what changes when you skip a week."], cta:"Try this on Sunday." },
+        { title:"The proposal line scaring off good clients", hook:"This one line in your proposals is quietly costing you clients.", points:["Show the exact phrase and why it reads as unsure.","Give the direct replacement line.","Read both versions out loud, back to back."], cta:"Check your last proposal for this." },
+        { title:"Why 'per project' pricing might be costing you", hook:"Per-project pricing feels simple. It might be quietly underpaying you.", points:["Show a real project that ran long, hours vs quote.","Explain what a scope buffer actually protects.","Give one line to add to every quote."], cta:"Comment your pricing model." }
+      ]
+    },
+    travel: {
+      label: "Travel",
+      ideas: [
+        { title:"The packing mistake that ruins the first day", hook:"Everyone packs for the trip. Almost nobody packs for the first day.", points:["Show what needs to be accessible, not buried.","Demonstrate the 'first four hours' pouch.","Show a packed bag opened wrong versus right."], cta:"Save this before your next flight." },
+        { title:"A neighborhood locals actually live in", hook:"Skip the street every tourist photographs. Go here instead.", points:["Show the walk from the famous spot to the real one.","Point out three things only locals would notice.","Give one thing to order or do there."], cta:"Save this for your trip." },
+        { title:"The booking trick that cuts the price in half", hook:"I paid half of what my friend paid for the same room.", points:["Show the exact site or method used.","Compare two screenshots, prices visible.","Note the one trade-off involved."], cta:"Try this before you book." },
+        { title:"What nobody tells you about the 'best' viewpoint", hook:"Everyone posts this view. Almost nobody shows you this part.", points:["Show the crowded reality versus the photo.","Give the actual best time to go.","Show a quieter alternative nearby."], cta:"Tag someone planning this trip." },
+        { title:"A carry-on-only system that actually works", hook:"I haven't checked a bag in two years. Here's the exact system.", points:["Show the folding or rolling method used.","List the non-negotiable items and why.","Show the full bag packed, zipped, weighed."], cta:"Save this before you overpack again." },
+        { title:"The seat you should never book on a long flight", hook:"You picked this seat to save money. You're going to regret it around hour six.", points:["Show the seat map and the specific row to avoid.","Explain the actual reason it's worse.","Give the nearby seat that costs the same or less."], cta:"Check your seat before you fly." },
+        { title:"A day-trip nobody puts in the guidebook", hook:"Every guidebook sends you to the same three spots. Here's the fourth.", points:["Show how to get there from the city center.","Point out what makes it worth the trip.","Give the best time of day to go."], cta:"Save this for your next trip." }
+      ]
+    },
+    comedy: {
+      label: "Comedy & Skits",
+      ideas: [
+        { title:"Types of people at the gym, ranked", hook:"There are exactly five types of people at every gym. You know all of them.", points:["Act out type one — the mirror-only guy.","Cut to type two — the equipment hoarder.","Land on the type everyone secretly is."], cta:"Comment which one you are." },
+        { title:"What your group chat actually sounds like", hook:"Nobody talks like this in real life. Everybody talks like this in the group chat.", points:["Act out the 'seen but no reply' energy.","Cut to the one person who always responds in a paragraph.","End on the meme nobody asked for."], cta:"Tag your group chat." },
+        { title:"Customer service voice vs real voice", hook:"Watch my voice change the second I pick up the work phone.", points:["Answer 'normally,' loud and blunt.","Switch instantly to the sugary work tone.","Break character for the punchline."], cta:"Anyone else do this?" },
+        { title:"How plans actually go vs how they were made", hook:"This is the group chat plan. This is what actually happens.", points:["Read out the confident, organized plan.","Cut to the chaos of the actual day.","Land on the one friend who saw it coming."], cta:"This is every trip ever." },
+        { title:"Expectations vs reality: adulthood edition", hook:"Nobody warned me adulthood would be like this.", points:["Show the confident 'expectation' version.","Cut hard to the underwhelming reality.","End on the smallest, most relatable detail."], cta:"Tell me I'm not alone." },
+        { title:"How texts actually get read vs how they're meant", hook:"This is how I meant that text. This is how it got read.", points:["Show the calm, innocent intention.","Cut to the paranoid, spiraling interpretation.","Land on the delayed, overly formal reply."], cta:"We've all done this." },
+        { title:"The five stages of finding a parking spot", hook:"Nobody prepares you for the emotional journey of parking downtown.", points:["Act out confident stage one — 'there's definitely a spot.'","Cut to stage three — bargaining with a hydrant.","Land on the walk of shame to the paid garage."], cta:"Tag someone who circles the block four times." }
+      ]
+    },
+    pets: {
+      label: "Pets & Animals",
+      ideas: [
+        { title:"The body language cue every owner misses", hook:"Your dog is telling you something right now and you're missing it.", points:["Show the subtle cue in slow motion.","Explain what it actually signals.","Show the correct response on camera."], cta:"Save this for your next walk." },
+        { title:"A trick that trains itself in one session", hook:"This trick took my dog one session. Here's exactly how.", points:["Show the setup and the first attempt.","Show the correction and the second attempt.","Show the trick landing clean by the end."], cta:"Try this today and tag me." },
+        { title:"The food label word that isn't what it sounds like", hook:"This word on your pet's food bag doesn't mean what you think.", points:["Show the label, zoomed in on the word.","Explain what it legally has to mean.","Give the phrase to actually look for instead."], cta:"Check your bag right now." },
+        { title:"Why your cat does that one weird thing", hook:"Your cat isn't broken. It's doing exactly what it's built to do.", points:["Show the behavior clip.","Explain the instinct behind it plainly.","Give one way to work with it, not against it."], cta:"Comment what your cat does." },
+        { title:"The vet visit red flag owners brush off", hook:"Most owners wait too long on this one sign. Don't.", points:["Describe the sign clearly and calmly.","Explain why it gets dismissed as 'normal.'","Give the one question to ask your vet."], cta:"Save this — it matters." },
+        { title:"The walk mistake making leash pulling worse", hook:"You're accidentally training your dog to pull. Here's how.", points:["Show the common handler reaction that rewards pulling.","Demonstrate the stop-and-reset method instead.","Show a few strides of loose-leash walking after."], cta:"Try this on your next walk." },
+        { title:"Why your pet ignores their name (and the fix)", hook:"Your pet isn't being stubborn. Their name just doesn't mean anything yet.", points:["Explain how names lose meaning through overuse.","Show the quick re-association exercise.","Show the response improving within the clip."], cta:"Start this today, five minutes." }
+      ]
+    },
+    fashion: {
+      label: "Fashion & Style",
+      ideas: [
+        { title:"The one fit change that reads 'expensive'", hook:"Same outfit, one change, completely different impression.", points:["Show the 'before' fit exactly as bought.","Make the single tailoring or styling change.","Show the after, same lighting, same pose."], cta:"Save this before your next thrift trip." },
+        { title:"Building a capsule from five pieces", hook:"Five pieces, twelve outfits. Here's the math.", points:["Lay out the five pieces on camera.","Combine them into three fast outfit changes.","Show a counter on screen ticking up combinations."], cta:"Which combo is your favorite?" },
+        { title:"The color that's been wearing you, not the other way around", hook:"You've been buying this color for years. It might not be for you.", points:["Show a quick way to test undertone.","Hold two shades up for comparison.","Show the flattering swap next to it."], cta:"Try this before your next haul." },
+        { title:"Thrift flip, start to finish", hook:"Found this for three dollars. Watch what happens.", points:["Show the item as found, flaws and all.","Show the fix or alteration step.","Reveal the styled final look."], cta:"Rate this flip." },
+        { title:"The accessory doing all the work in this outfit", hook:"This outfit is basic without one thing. Guess what it is.", points:["Show the outfit plain, no accessory.","Add the one piece that changes everything.","Show the full look, front and back."], cta:"Comment your guess before the reveal." },
+        { title:"Two outfits, one closet, way more range than you think", hook:"Same closet. You're just not remixing it.", points:["Show outfit one exactly as usually worn.","Swap two pieces only, nothing new added.","Show outfit two looking completely different."], cta:"Try this remix tonight." },
+        { title:"The fit check people actually stop scrolling for", hook:"Most fit checks get skipped in a second. Here's what makes people stop.", points:["Show the boring version — static, flat lighting.","Show the version with movement and a turn.","Point out the exact second attention peaks."], cta:"Try this on your next post." }
+      ]
+    },
+    motivation: {
+      label: "Motivation & Mindset",
+      ideas: [
+        { title:"The excuse that's actually a decision", hook:"'I don't have time' is a decision wearing an excuse's clothes.", points:["Name the excuse plainly, no softening.","Reframe it as the choice it actually is.","Give one small action to prove the reframe."], cta:"Say it back to yourself today." },
+        { title:"What discipline actually looks like at 6am", hook:"Discipline isn't dramatic. It looks like this, every single day.", points:["Show the unglamorous, repetitive version of the routine.","Contrast it with the 'highlight reel' version people post.","Name the boring part that actually matters."], cta:"Save this for the next time you want to skip." },
+        { title:"The comparison trap, and the way out of it", hook:"You're not behind. You're comparing your chapter one to someone's chapter ten.", points:["Name the specific comparison people make.","Reframe using timeline, not talent.","Give one action to take today regardless."], cta:"Tag someone who needs this today." },
+        { title:"Why 'just start' is bad advice", hook:"'Just start' sounds great and helps almost nobody. Here's what actually works.", points:["Explain why vague motivation fails under pressure.","Give the specific, tiny first action instead.","Show it being done, start to finish, in seconds."], cta:"Do this one thing in the next 5 minutes." },
+        { title:"The version of you from a year ago is watching", hook:"A year ago, you wished for exactly where you are right now.", points:["Name a few plausible 'year ago' wishes.","Connect them to present, ordinary reality.","Close on a forward-looking, concrete challenge."], cta:"Comment one thing you're proud of this year." },
+        { title:"The 2-minute rule that beats procrastination", hook:"You don't need motivation. You need two minutes.", points:["Explain the rule in one plain sentence.","Demonstrate it live on something you're avoiding.","Show how two minutes usually turns into twenty."], cta:"Set a 2-minute timer right now." },
+        { title:"Why 'I'll start Monday' never actually starts", hook:"Monday isn't a strategy. It's a delay with a calendar page.", points:["Name what Monday actually represents psychologically.","Show the smaller, unglamorous action available today.","Challenge the viewer to do it before the video ends."], cta:"Start the small version today, not Monday." }
+      ]
+    }
+  };
+
+  var DURATIONS = [
+    { id:15,  label:"15s", sub:"Quick hit" },
+    { id:30,  label:"30s", sub:"Standard" },
+    { id:60,  label:"60s", sub:"Deep dive" },
+    { id:180, label:"3min", sub:"Full story" }
+  ];
+
+  var SHOTS_HOOK = [
+    "Direct to camera, close-up, mid-sentence energy — no slow intro.",
+    "Cold open on the result first, then whip-pan to your face.",
+    "Handheld, walking toward camera, say the hook before you're fully in frame.",
+    "Static wide shot, you're mid-action when the clip starts.",
+    "Jump cut into frame — you're already talking when the first frame hits.",
+    "Over-the-shoulder shot revealing the subject, then you turn to camera."
+  ];
+  var SHOTS_POINT = [
+    "Cut to a close-up demonstration of exactly what you're describing.",
+    "B-roll over your voiceover — hands doing the thing, no talking head.",
+    "Quick zoom-in for emphasis as you land the key word.",
+    "Split-screen style comparison, before on one side, after the other.",
+    "Cutaway to a screen recording or product shot for two seconds.",
+    "Low angle, slight movement, keeps energy up mid-explanation.",
+    "Insert shot — just hands and the object, no face, two seconds max.",
+    "Whip-pan from you to the thing you're pointing at."
+  ];
+  var SHOTS_CONTEXT = [
+    "Slower pace here — sit or stand still, let this beat breathe before speeding back up.",
+    "Cut to a wider shot, more environment visible, calmer energy than the hook.",
+    "Direct to camera, but pull back slightly to a medium shot."
+  ];
+  var SHOTS_RECAP = [
+    "Fast cut back through the b-roll already shown, half-speed narration.",
+    "Direct to camera, close-up, slower and more deliberate than the hook.",
+    "Text-only frame — let the on-screen recap hold for a beat with no talking."
+  ];
+  var SHOTS_CTA = [
+    "Back to direct-to-camera, close-up, deliver the line straight.",
+    "Text overlay appears as you say it, then hold on your face.",
+    "Quick cut to you pointing at the caption/comment section.",
+    "Step back into a wider frame — signals the video is wrapping up."
+  ];
+  var OVERLAYS = ["ON-SCREEN TEXT: key phrase from this line","CAPTION: number or stat, large","LOWER THIRD: one-word label","ARROW graphic pointing at the subject"];
+
+  var CONTEXT_LINES = [
+    "Quick context before we get into it — this is exactly where most people go wrong.",
+    "Here's why this actually matters, not just what to do about it.",
+    "Stick with me for a second — this makes the rest of it make sense."
+  ];
+  var RECAP_LINES = [
+    "Quick recap, in case you jumped in late: that's the whole method.",
+    "So to sum it up — simple on paper, easy to skip if you're not paying attention.",
+    "That's the full breakdown. Watch it back once if any of that moved fast."
+  ];
+
+  function pick(arr, avoid){
+    if (arr.length === 1) return arr[0];
+    var choice;
+    do { choice = arr[Math.floor(Math.random()*arr.length)]; }
+    while (choice === avoid);
+    return choice;
+  }
+
+  // Shuffle-bag per niche so every idea gets used before any repeats
+  var bags = {};
+  function nextIdeaIndex(nicheKey, count){
+    if (!bags[nicheKey] || bags[nicheKey].length === 0) {
+      var arr = [];
+      for (var i=0;i<count;i++) arr.push(i);
+      for (var j=arr.length-1;j>0;j--){
+        var k = Math.floor(Math.random()*(j+1));
+        var tmp=arr[j]; arr[j]=arr[k]; arr[k]=tmp;
+      }
+      bags[nicheKey] = arr;
+    }
+    return bags[nicheKey].pop();
+  }
+  function fmtTime(s){
+    var m = Math.floor(s/60), sec = s%60;
+    return (m<10?"0":"")+m+":"+(sec<10?"0":"")+sec;
+  }
+
+  function buildScenes(idea, duration){
+    // Longer runtimes don't just stretch the same beats — they get real
+    // extra structure: a context beat after the hook, and a recap before the CTA.
+    var pointCount = duration <= 15 ? 1 : duration <= 30 ? 2 : 3;
+    var points = idea.points.slice(0, pointCount);
+    var useContext = duration >= 60;
+    var useRecap = duration >= 180;
+
+    var segments = [];
+    segments.push({ type:"HOOK", text: idea.hook });
+    if (useContext) segments.push({ type:"CONTEXT", text: pick(CONTEXT_LINES) });
+    points.forEach(function(p){ segments.push({ type:"BEAT", text: p }); });
+    if (useRecap) segments.push({ type:"RECAP", text: pick(RECAP_LINES) });
+    segments.push({ type:"CTA", text: idea.cta });
+
+    // time budget: hook + cta + context + recap get fixed-ish shares, beats split the rest
+    var hookTime = Math.max(2, Math.round(duration * 0.16));
+    var ctaTime = Math.max(2, Math.round(duration * 0.12));
+    var contextTime = useContext ? Math.max(3, Math.round(duration * 0.12)) : 0;
+    var recapTime = useRecap ? Math.max(3, Math.round(duration * 0.10)) : 0;
+    var fixed = hookTime + ctaTime + contextTime + recapTime;
+    var remaining = Math.max(points.length * 3, duration - fixed);
+    var beatTime = Math.round(remaining / Math.max(points.length,1));
+
+    var lastShot = null;
+    var t = 0;
+    var beatNum = 0;
+    var scenes = segments.map(function(seg, i){
+      var dur, shot, label;
+      if (seg.type === "HOOK"){ dur = hookTime; shot = pick(SHOTS_HOOK); label = "HOOK"; }
+      else if (seg.type === "CONTEXT"){ dur = contextTime; shot = pick(SHOTS_CONTEXT); label = "SET-UP"; }
+      else if (seg.type === "RECAP"){ dur = recapTime; shot = pick(SHOTS_RECAP); label = "RECAP"; }
+      else if (seg.type === "CTA"){ dur = ctaTime; shot = pick(SHOTS_CTA); label = "CALL TO ACTION"; }
+      else { beatNum++; dur = beatTime; shot = pick(SHOTS_POINT, lastShot); label = "SCENE " + beatNum; }
+      lastShot = shot;
+      var start = t;
+      t += dur;
+      return {
+        num: i+1,
+        tc: fmtTime(start),
+        label: label,
+        shot: shot,
+        line: seg.text,
+        overlay: (seg.type !== "CTA") ? pick(OVERLAYS) : null
+      };
+    });
+    return scenes;
+  }
+
+  // ---------------- UI SETUP ----------------
+  var nicheSelect = document.getElementById('niche');
+  Object.keys(FALLBACK_NICHES).forEach(function(key){
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = FALLBACK_NICHES[key].label;
+    nicheSelect.appendChild(opt);
+  });
+
+  var selectedDuration = 30;
+  var durGrid = document.getElementById('durationGrid');
+  DURATIONS.forEach(function(d){
+    var btn = document.createElement('button');
+    btn.className = 'dur-btn' + (d.id === selectedDuration ? ' active' : '');
+    btn.type = 'button';
+    btn.dataset.id = d.id;
+    btn.innerHTML = d.label + '<span>' + d.sub + '</span>';
+    btn.addEventListener('click', function(){
+      selectedDuration = d.id;
+      Array.prototype.forEach.call(durGrid.children, function(c){ c.classList.remove('active'); });
+      btn.classList.add('active');
+    });
+    durGrid.appendChild(btn);
+  });
+
+  var generateBtn = document.getElementById('generateBtn');
+  var COOLDOWN_MS = 3500;
+  var lastGenerateAt = 0;
+
+  // Simple per-browser lifetime cap. Stored in localStorage, so it's easy for
+  // a visitor to reset (clear browser data, use incognito, use another
+  // device) — this is a first-pass limit, not real account-based metering.
+  var GENERATION_LIMIT = 3;
+  var USAGE_KEY = 'slateline_gen_count';
+  function getUsageCount(){
+    return parseInt(localStorage.getItem(USAGE_KEY) || '0', 10);
+  }
+  function bumpUsageCount(){
+    var next = getUsageCount() + 1;
+    localStorage.setItem(USAGE_KEY, String(next));
+    return next;
+  }
+
+  function generate(){
+    var now = Date.now();
+    if (now - lastGenerateAt < COOLDOWN_MS) return;
+    var used = getUsageCount();
+    if (used >= GENERATION_LIMIT){
+      alert('You\'ve used all ' + GENERATION_LIMIT + ' free scripts on this browser. Thanks for trying it out!');
+      return;
+    }
+    lastGenerateAt = now;
+
+    var nicheKey = nicheSelect.value;
+    var fallbackNiche = FALLBACK_NICHES[nicheKey];
+    var nicheLabel = fallbackNiche.label;
+
+    setLoading(true);
+
+    fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nicheKey: nicheKey, nicheLabel: nicheLabel, duration: selectedDuration })
+    })
+    .then(function(res){
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      return res.json();
+    })
+    .then(function(data){
+      if (!data || !data.idea || !data.idea.title || !data.idea.hook || !Array.isArray(data.idea.points) || !data.idea.cta){
+        throw new Error('malformed response');
+      }
+      bumpUsageCount();
+      updateUsageNote();
+      var scenes = buildScenes(data.idea, selectedDuration);
+      render(nicheLabel, data.idea, scenes, 'ai');
+    })
+    .catch(function(){
+      // Backend unavailable (no API key set yet, network issue, etc.) — fall back
+      // to the built-in local idea bank so the tool still works.
+      var idx = nextIdeaIndex(nicheKey, fallbackNiche.ideas.length);
+      var idea = fallbackNiche.ideas[idx];
+      var scenes = buildScenes(idea, selectedDuration);
+      render(nicheLabel, idea, scenes, 'offline');
+    })
+    .finally(function(){
+      setLoading(false);
+    });
+  }
+
+  function setLoading(isLoading){
+    generateBtn.disabled = isLoading;
+    generateBtn.textContent = isLoading ? 'Writing script…' : 'Generate script';
+  }
+
+  function updateUsageNote(){
+    var used = getUsageCount();
+    var left = Math.max(0, GENERATION_LIMIT - used);
+    var note = document.getElementById('usageNote');
+    if (left > 0){
+      note.textContent = left + ' free generation' + (left === 1 ? '' : 's') + ' left on this browser.';
+    } else {
+      note.textContent = 'You\'ve used all your free generations on this browser.';
+      generateBtn.disabled = true;
+    }
+  }
+  updateUsageNote();
+
+  function render(nicheLabel, idea, scenes, source){
+    document.getElementById('emptyState').style.display = 'none';
+    var out = document.getElementById('scriptOut');
+    out.style.display = 'block';
+
+    var durLabel = DURATIONS.find(function(d){ return d.id === selectedDuration; });
+    var sourceNote = source === 'ai'
+      ? 'WRITTEN FRESH BY AI'
+      : 'OFFLINE IDEA BANK — connect an API key for fresh scripts';
+
+    var html = '';
+    html += '<div class="script-top">';
+    html += '  <div class="meta"><b>' + nicheLabel + '</b><br>RUNTIME: ' + durLabel.label + ' (' + durLabel.sub + ')<br>SCENES: ' + scenes.length + '<br>' + sourceNote + '</div>';
+    html += '  <button id="copyBtn" type="button">Copy script</button>';
+    html += '</div>';
+    html += '<h2 class="idea-title">' + idea.title + '</h2>';
+    html += '<p class="idea-angle">Film this as a single continuous take where you can, cutting only where noted below. Say every line in your own words — this is the beat, not a teleprompter script.</p>';
+
+    scenes.forEach(function(s){
+      html += '<div class="scene">';
+      html += '  <div class="tc">' + s.tc + '</div>';
+      html += '  <div>';
+      html += '    <div class="slate-line">Scene ' + s.num + ' — ' + s.label + '</div>';
+      html += '    <p class="shot">' + s.shot + '</p>';
+      html += '    <p class="line">"' + s.line + '"</p>';
+      if (s.overlay) html += '    <span class="overlay-tag">' + s.overlay + '</span>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    html += '<div class="script-foot">';
+    html += '  <div class="cta-box"><b>Caption idea</b>' + idea.title + '</div>';
+    html += '  <button class="again-btn" id="againBtn" type="button">Generate another</button>';
+    html += '</div>';
+
+    out.innerHTML = html;
+
+    document.getElementById('againBtn').addEventListener('click', generate);
+    document.getElementById('copyBtn').addEventListener('click', function(){
+      var text = nicheLabel + ' — ' + durLabel.label + '\n' + idea.title + '\n\n';
+      scenes.forEach(function(s){
+        text += s.tc + '  Scene ' + s.num + ' (' + s.label + ')\n';
+        text += 'Shot: ' + s.shot + '\n';
+        text += '"' + s.line + '"\n\n';
+      });
+      text += 'Caption idea: ' + idea.title + '\n';
+      var btn = document.getElementById('copyBtn');
+      navigator.clipboard.writeText(text).then(function(){
+        var orig = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function(){ btn.textContent = orig; }, 1500);
+      }).catch(function(){
+        btn.textContent = 'Copy failed';
+      });
+    });
+
+    out.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', generate);
+
+})();
+</script>
+
+</body>
+</html>

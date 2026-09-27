@@ -1,0 +1,9 @@
+{
+  "name": "scriptslate-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI script generator for short-form social video, with a Groq-powered backend.",
+  "engines": {
+    "node": ">=18"
+  }
+}
